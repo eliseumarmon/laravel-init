@@ -1,0 +1,14 @@
+# Local Docker Compose configuration
+.env
+
+# Laravel runtime configuration and dependencies
+/src/.env
+/src/vendor/
+/src/node_modules/
+/src/.phpunit.result.cache
+/src/storage/logs/
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/

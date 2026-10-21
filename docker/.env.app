@@ -1,4 +1,0 @@
-MYSQL_HOST=mysql
-MYSQL_USER=alumno
-MYSQL_PASSWORD=alumno
-MYSQL_DATABASE=test
