@@ -17,26 +17,26 @@ La opción recomendada es activar este repositorio como **GitHub Template Reposi
 También se puede crear desde GitHub CLI:
 
 ```bash
-gh repo create mi-proyecto --template eliseumarmon/laravelinit --private --clone
+gh repo create mi-proyecto --template eliseumarmon/laravel-init --private --clone
 cd mi-proyecto
 ```
 
 Como alternativa, se puede clonar directamente:
 
 ```bash
-git clone https://github.com/eliseumarmon/laravelinit.git mi-proyecto
+git clone https://github.com/eliseumarmon/laravel-init.git mi-proyecto
 cd mi-proyecto
 ```
 
 ## Configuración e inicio
 
-1. Crea la configuración local y personalízala, especialmente si tendrás varios proyectos activos:
+1. Genera la configuración local. Este comando detecta automáticamente el UID y GID del usuario actual:
 
    ```bash
-   cp .env.example .env
+   make ensure-env
    ```
 
-2. Edita `.env`. `PROJECT_NAME` identifica los recursos de Compose; `HTTP_PORT` y `MYSQL_PORT` son puertos del host. MySQL siempre está disponible para Laravel como `mysql:3306` dentro de Docker.
+2. Edita `.env`, especialmente si tendrás varios proyectos activos. `PROJECT_NAME` identifica los recursos de Compose; `HTTP_PORT` y `MYSQL_PORT` son puertos del host. MySQL siempre está disponible para Laravel como `mysql:3306` dentro de Docker.
 
 3. Crea Laravel, inicia los servicios y ejecuta migraciones:
 
@@ -46,7 +46,7 @@ cd mi-proyecto
 
 La aplicación estará disponible en `http://127.0.0.1:HTTP_PORT` (por defecto, `http://127.0.0.1:8080`).
 
-`make init` crea `.env` automáticamente si falta, pero revisarlo antes evita conflictos de nombre, puertos o credenciales. Por seguridad, nunca sobrescribe contenido existente en `src` ni elimina volúmenes Docker.
+`make init` también crea `.env` automáticamente si falta, pero `make ensure-env` es el flujo recomendado para poder personalizarlo antes de crear la aplicación. Por seguridad, nunca sobrescribe contenido existente en `src` ni elimina volúmenes Docker.
 
 ## Variables de infraestructura
 
@@ -75,8 +75,11 @@ Xdebug está desactivado de forma predeterminada. Con `XDEBUG_MODE=debug`, se co
 | `make shell` | Abre Bash en el contenedor PHP. |
 | `make logs` | Sigue los registros de todos los servicios. |
 | `make migrate` | Ejecuta migraciones Laravel. |
+| `make ensure-env` | Crea `.env` y detecta el UID/GID actuales si todavía no existe. |
 
 Si una inicialización falla después de crear Laravel, corrige la causa y usa `make up` o `make migrate`; no ejecutes de nuevo `make init` sobre una aplicación ya creada.
+
+Al finalizar correctamente, `make init` sustituye este README por el del proyecto generado y elimina la carpeta `templates/`, que ya no es necesaria.
 
 ## Clones directos y Git
 
@@ -90,7 +93,7 @@ git add -A
 git commit -m "Initial Laravel application"
 ```
 
-El comando sólo se ejecuta cuando `origin` apunta exactamente a `eliseumarmon/laravelinit` y no hay commits locales adicionales. Conserva los archivos del proyecto, elimina el historial heredado y crea un repositorio nuevo sin remoto.
+El comando sólo se ejecuta cuando `origin` apunta exactamente a `eliseumarmon/laravel-init` y no hay commits locales adicionales. Conserva los archivos del proyecto, elimina el historial heredado y crea un repositorio nuevo sin remoto.
 
 ## Publicar como plantilla
 

@@ -20,16 +20,26 @@ init: ensure-env ## Create Laravel, start services, and run initial migrations
 	echo "Building the PHP image..."; \
 	$(COMPOSE) build php; \
 	echo "Creating the Laravel application..."; \
-	$(COMPOSE) run --rm --no-deps php composer create-project laravel/laravel .; \
+	$(COMPOSE) run --rm --no-deps php composer create-project --no-scripts laravel/laravel .; \
+	if [ ! -f src/.env ]; then cp src/.env.example src/.env; fi; \
 	echo "Starting services..."; \
 	$(COMPOSE) up -d --wait; \
+	echo "Discovering Laravel packages..."; \
+	$(COMPOSE) exec -T php composer run-script post-autoload-dump; \
 	echo "Generating the Laravel application key..."; \
 	$(COMPOSE) exec -T php php artisan key:generate --force; \
 	echo "Running initial migrations..."; \
 	$(COMPOSE) exec -T php php artisan migrate --force; \
 	project_name="$$(sed -n 's/^PROJECT_NAME=//p' $(ENV_FILE) | tail -n 1)"; \
 	sed "s/{{PROJECT_NAME}}/$$project_name/g" templates/README.project.md > README.md; \
-	echo "Laravel is ready at http://127.0.0.1:$$(sed -n 's/^HTTP_PORT=//p' $(ENV_FILE) | tail -n 1)"
+	rm -rf templates; \
+	echo "Laravel is ready at http://127.0.0.1:$$(sed -n 's/^HTTP_PORT=//p' $(ENV_FILE) | tail -n 1)"; \
+	remote="$$(git remote get-url origin 2>/dev/null || true)"; \
+	normalized="$$(printf '%s\n' "$$remote" | sed -E 's#^git@github\\.com:#github.com/#; s#^ssh://git@github\\.com/#github.com/#; s#^https?://github\\.com/#github.com/#; s#\\.git/?##')"; \
+	normalized="$${normalized%/}"; \
+	if [ "$$normalized" = "github.com/eliseumarmon/laravel-init" ]; then \
+		echo "Direct clone detected. To start independent Git history, run: make detach-template CONFIRM_DETACH=YES"; \
+	fi
 
 up: validate-env ## Start all services and wait until they are ready
 	@$(COMPOSE) up -d --wait
@@ -76,8 +86,9 @@ detach-template: ## Replace a direct clone's Laravel Init history (CONFIRM_DETAC
 	fi; \
 	git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "This directory is not a Git worktree." >&2; exit 1; }; \
 	remote="$$(git remote get-url origin 2>/dev/null || true)"; \
-	normalized="$$(printf '%s\n' "$$remote" | sed -E 's#^git@github\.com:#github.com/#; s#^ssh://git@github\.com/#github.com/#; s#^https?://github\.com/#github.com/#; s#\.git/?$$##; s#/$##')"; \
-	[ "$$normalized" = "github.com/eliseumarmon/laravelinit" ] || { echo "origin is not the Laravel Init template; refusing to replace Git history." >&2; exit 1; }; \
+	normalized="$$(printf '%s\n' "$$remote" | sed -E 's#^git@github\.com:#github.com/#; s#^ssh://git@github\.com/#github.com/#; s#^https?://github\.com/#github.com/#; s#\.git/?##')"; \
+	normalized="$${normalized%/}"; \
+	[ "$$normalized" = "github.com/eliseumarmon/laravel-init" ] || { echo "origin is not the Laravel Init template; refusing to replace Git history." >&2; exit 1; }; \
 	base_ref="$$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || printf '%s' origin/main)"; \
 	git rev-parse --verify "$$base_ref" >/dev/null 2>&1 || { echo "Cannot verify the template's tracked branch; refusing to replace Git history." >&2; exit 1; }; \
 	[ "$$(git rev-list --count "$$base_ref..HEAD")" -eq 0 ] || { echo "Local commits were detected; refusing to replace Git history." >&2; exit 1; }; \
